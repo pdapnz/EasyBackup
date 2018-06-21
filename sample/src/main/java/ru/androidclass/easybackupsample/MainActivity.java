@@ -27,6 +27,8 @@ import ru.androidclass.easybackup.core.exception.RestoreException;
 import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupCreator;
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
 
+import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
+
 /**
  * Created by Dmitry Polozov <pdapnz@ya.ru> on 21.06.2018.
  */
@@ -38,7 +40,6 @@ public class MainActivity extends AppCompatActivity {
     private File spRestoreFile;
     private File dpBackupFile;
     private File dpRestoreFile;
-    private static final String DBNAME = "testdb.db";
     private static final String SPNAME = "prefs.xml";
     private static final int SELECT_FOLDER_CODE_FOR_BACKUP = 1001;
     private static final int SELECT_FOLDER_CODE_FOR_RESTORE = 1002;
@@ -93,12 +94,12 @@ public class MainActivity extends AppCompatActivity {
                 File file = Utils.getFileForUri(files.get(0));
                 if (requestCode == SELECT_FOLDER_CODE_FOR_BACKUP) {
                     spBackupFile = new File(file, SPNAME);
-                    dpBackupFile = new File(file, DBNAME);
+                    dpBackupFile = new File(file, DATABASE_NAME);
                     backup();
                 }
                 if (requestCode == SELECT_FOLDER_CODE_FOR_RESTORE) {
                     spRestoreFile = new File(file, SPNAME);
-                    dpRestoreFile = new File(file, DBNAME);
+                    dpRestoreFile = new File(file, DATABASE_NAME);
                     restore();
                 }
             }
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
     private BackupManager getBackupManager() {
         BackupManager backupManager = new BackupManager();
         backupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(preferences, spBackupFile, spRestoreFile));
-        backupManager.addBackupCreator(new SqliteFileBackupCreator(getApplication(), dpBackupFile, dpRestoreFile, DBNAME));
+        backupManager.addBackupCreator(new SqliteFileBackupCreator(getApplication(), dpBackupFile, dpRestoreFile, DATABASE_NAME));
         return backupManager;
     }
 }
