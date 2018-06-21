@@ -12,7 +12,7 @@ public interface Backup {
     /**
      * This method is called for backup data
      */
-    void backup() throws BackupException, FileNotFoundException;
+    void backup() throws BackupException;
     /**
      * This method is called for restore data
      */
