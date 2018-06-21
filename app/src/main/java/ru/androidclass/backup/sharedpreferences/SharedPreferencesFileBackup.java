@@ -13,8 +13,8 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 
 import ru.androidclass.backup.core.Backup;
-import ru.androidclass.backup.core.BackupManagerBackupException;
-import ru.androidclass.backup.core.BackupManagerRestoreException;
+import ru.androidclass.backup.core.exception.BackupException;
+import ru.androidclass.backup.core.exception.RestoreException;
 
 /**
  * Class for backup and restore application's Shared Preference
@@ -31,31 +31,31 @@ public class SharedPreferencesFileBackup implements Backup {
     }
 
     @Override
-    public void backup() throws BackupManagerBackupException {
+    public void backup() throws BackupException {
         ObjectOutputStream output = null;
         try {
             output = new ObjectOutputStream(new FileOutputStream(mBackupFile));
             output.writeObject(mSharedPreferences.getAll());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            throw (new BackupManagerBackupException(e));
+            throw (new BackupException(e));
         } catch (IOException e) {
             e.printStackTrace();
-            throw (new BackupManagerBackupException(e));
+            throw (new BackupException(e));
         }
         try {
             output.flush();
             output.close();
         } catch (IOException e) {
             e.printStackTrace();
-            throw (new BackupManagerBackupException(e));
+            throw (new BackupException(e));
         }
     }
 
     @SuppressWarnings({"unchecked", "UnnecessaryUnboxing"})
     @SuppressLint("ApplySharedPref")
     @Override
-    public void restore() throws BackupManagerRestoreException {
+    public void restore() throws RestoreException {
         ObjectInputStream input = null;
         try {
             input = new ObjectInputStream(new FileInputStream(mRestoreFile));
@@ -80,20 +80,20 @@ public class SharedPreferencesFileBackup implements Backup {
             prefEdit.commit();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            throw (new BackupManagerRestoreException(e));
+            throw (new RestoreException(e));
         } catch (IOException e) {
             e.printStackTrace();
-            throw (new BackupManagerRestoreException(e));
+            throw (new RestoreException(e));
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            throw (new BackupManagerRestoreException(e));
+            throw (new RestoreException(e));
         }
 
         try {
             input.close();
         } catch (IOException e) {
             e.printStackTrace();
-            throw (new BackupManagerRestoreException(e));
+            throw (new RestoreException(e));
         }
     }
 }

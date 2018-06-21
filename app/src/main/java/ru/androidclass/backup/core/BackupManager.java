@@ -1,5 +1,8 @@
 package ru.androidclass.backup.core;
 
+import ru.androidclass.backup.core.exception.BackupException;
+import ru.androidclass.backup.core.exception.RestoreException;
+
 /**
  * Entry point for creating and restoring backups.
  */
@@ -23,11 +26,11 @@ public class BackupManager {
         mBackupCreatorHolder.addJobCreator(creator);
     }
 
-    public void backupAll() throws BackupManagerBackupException {
+    public void backupAll() throws BackupException {
         mBackupCreatorHolder.backup();
     }
 
-    public void restoreAll() throws BackupManagerRestoreException {
+    public void restoreAll() throws RestoreException {
         mBackupCreatorHolder.restore();
     }
 
