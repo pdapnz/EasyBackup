@@ -1,4 +1,4 @@
-package ru.androidclass.backup.core;
+package ru.androidclass.easybackup.core;
 
 /**
  * Fabric class for creating implementations of {@link Backup}

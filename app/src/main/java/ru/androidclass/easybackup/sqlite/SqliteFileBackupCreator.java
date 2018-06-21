@@ -1,11 +1,11 @@
-package ru.androidclass.backup.sqlite;
+package ru.androidclass.easybackup.sqlite;
 
 import android.app.Application;
 
 import java.io.File;
 
-import ru.androidclass.backup.core.Backup;
-import ru.androidclass.backup.core.BackupCreator;
+import ru.androidclass.easybackup.core.Backup;
+import ru.androidclass.easybackup.core.BackupCreator;
 
 /**
  * Fabric class for creating {@link SqliteFileBackup}.

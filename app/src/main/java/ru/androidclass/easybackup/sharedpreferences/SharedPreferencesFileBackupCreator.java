@@ -1,11 +1,11 @@
-package ru.androidclass.backup.sharedpreferences;
+package ru.androidclass.easybackup.sharedpreferences;
 
 import android.content.SharedPreferences;
 
 import java.io.File;
 
-import ru.androidclass.backup.core.Backup;
-import ru.androidclass.backup.core.BackupCreator;
+import ru.androidclass.easybackup.core.Backup;
+import ru.androidclass.easybackup.core.BackupCreator;
 
 /**
  * Fabric class for creating {@link SharedPreferencesFileBackup}.

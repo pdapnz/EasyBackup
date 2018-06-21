@@ -1,9 +1,9 @@
-package ru.androidclass.backup.core;
+package ru.androidclass.easybackup.core;
 
 import java.io.FileNotFoundException;
 
-import ru.androidclass.backup.core.exception.BackupException;
-import ru.androidclass.backup.core.exception.RestoreException;
+import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.RestoreException;
 
 /**
  * Base class for running backups.

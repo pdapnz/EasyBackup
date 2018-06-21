@@ -1,4 +1,4 @@
-package ru.androidclass.backup.sqlite;
+package ru.androidclass.easybackup.sqlite;
 
 import android.app.Application;
 import android.content.Context;
@@ -10,9 +10,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
-import ru.androidclass.backup.core.Backup;
-import ru.androidclass.backup.core.exception.BackupException;
-import ru.androidclass.backup.core.exception.RestoreException;
+import ru.androidclass.easybackup.core.Backup;
+import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.RestoreException;
 
 /**
  * Class for backup and restore application's sqlite database

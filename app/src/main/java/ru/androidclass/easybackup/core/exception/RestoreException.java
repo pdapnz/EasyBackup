@@ -1,4 +1,4 @@
-package ru.androidclass.backup.core.exception;
+package ru.androidclass.easybackup.core.exception;
 
 public class RestoreException extends Exception {
     public RestoreException(Throwable cause) {

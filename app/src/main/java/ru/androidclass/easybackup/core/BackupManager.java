@@ -1,7 +1,7 @@
-package ru.androidclass.backup.core;
+package ru.androidclass.easybackup.core;
 
-import ru.androidclass.backup.core.exception.BackupException;
-import ru.androidclass.backup.core.exception.RestoreException;
+import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.RestoreException;
 
 /**
  * Entry point for creating and restoring backups.

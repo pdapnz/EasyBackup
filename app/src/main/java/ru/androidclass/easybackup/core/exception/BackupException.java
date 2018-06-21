@@ -1,4 +1,4 @@
-package ru.androidclass.backup.core.exception;
+package ru.androidclass.easybackup.core.exception;
 
 public class BackupException extends Exception {
     public BackupException(Throwable cause) {

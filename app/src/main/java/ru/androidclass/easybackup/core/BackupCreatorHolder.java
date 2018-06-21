@@ -1,11 +1,11 @@
-package ru.androidclass.backup.core;
+package ru.androidclass.easybackup.core;
 
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import ru.androidclass.backup.core.exception.BackupException;
-import ru.androidclass.backup.core.exception.RestoreException;
+import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.RestoreException;
 
 class BackupCreatorHolder {
 

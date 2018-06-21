@@ -1,4 +1,4 @@
-package ru.androidclass.backup.sharedpreferences;
+package ru.androidclass.easybackup.sharedpreferences;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
@@ -12,9 +12,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
 
-import ru.androidclass.backup.core.Backup;
-import ru.androidclass.backup.core.exception.BackupException;
-import ru.androidclass.backup.core.exception.RestoreException;
+import ru.androidclass.easybackup.core.Backup;
+import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.RestoreException;
 
 /**
  * Class for backup and restore application's Shared Preference

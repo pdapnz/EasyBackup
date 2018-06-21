@@ -1,4 +1,4 @@
-package ru.androidclass.backup;
+package ru.androidclass.easybackup;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
