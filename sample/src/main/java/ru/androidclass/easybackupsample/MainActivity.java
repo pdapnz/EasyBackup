@@ -11,12 +11,14 @@ import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.nononsenseapps.filepicker.Utils;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.List;
 
 import permissions.dispatcher.NeedsPermission;
@@ -26,6 +28,8 @@ import ru.androidclass.easybackup.core.exception.BackupException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupCreator;
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
+import ru.androidclass.easybackupsample.db.DB;
+import ru.androidclass.easybackupsample.db.entity.Lipsum;
 
 import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
 
@@ -35,7 +39,7 @@ import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
 
 @RuntimePermissions
 public class MainActivity extends AppCompatActivity {
-
+    private static final String TAG = MainActivity.class.getSimpleName();
     private File spBackupFile;
     private File spRestoreFile;
     private File dpBackupFile;
@@ -56,6 +60,11 @@ public class MainActivity extends AppCompatActivity {
                 v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
 
         preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+        preferences.edit().putString("test_key", String.valueOf(Calendar.getInstance().getTime())).apply();
+
+        DB db = new DB(getApplication());
+        List<Lipsum> lipsums = db.getDB().lipsumDao().getLipsums();
+        Log.d(TAG, "lipsums " + lipsums);
     }
 
 

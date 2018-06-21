@@ -11,5 +11,5 @@ import ru.androidclass.easybackupsample.db.entity.Lipsum;
 @Dao
 public interface LipsumDao {
     @Query("SELECT * FROM Lipsum")
-    LiveData<List<Lipsum>> getLipsums(int zodiak, int sex);
+    List<Lipsum> getLipsums();
 }

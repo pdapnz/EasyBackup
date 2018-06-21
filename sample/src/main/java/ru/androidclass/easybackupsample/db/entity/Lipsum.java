@@ -4,9 +4,7 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
-@Entity(tableName = "Lipsum", indices = {
-        @Index(value = "lipsum")
-})
+@Entity(tableName = "Lipsum")
 public class Lipsum {
     @PrimaryKey
     private int Id;
@@ -28,7 +26,7 @@ public class Lipsum {
         return name;
     }
 
-    public void setNames(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
