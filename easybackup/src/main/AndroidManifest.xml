@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ru.androidclass.easybackupsample">
+    package="ru.androidclass.easybackup">
 
     <application
         android:allowBackup="false"
