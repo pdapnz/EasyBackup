@@ -1,5 +1,6 @@
 package ru.androidclass.easybackupsample;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
@@ -17,6 +19,8 @@ import com.nononsenseapps.filepicker.Utils;
 import java.io.File;
 import java.util.List;
 
+import permissions.dispatcher.NeedsPermission;
+import permissions.dispatcher.RuntimePermissions;
 import ru.androidclass.easybackup.core.BackupManager;
 import ru.androidclass.easybackup.core.exception.BackupException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
@@ -26,6 +30,8 @@ import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
 /**
  * Created by Dmitry Polozov <pdapnz@ya.ru> on 21.06.2018.
  */
+
+@RuntimePermissions
 public class MainActivity extends AppCompatActivity {
 
     private File spBackupFile;
@@ -41,8 +47,32 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView();
+        setContentView(R.layout.activity_main);
+
+        findViewById(R.id.backupButton).setOnClickListener(
+                v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
+        findViewById(R.id.restoreButton).setOnClickListener(
+                v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
+
         preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // NOTE: delegate the permission handling to generated method
+        MainActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults);
+    }
+
+    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    public void selectBackupFolder() {
+        selectFolder(SELECT_FOLDER_CODE_FOR_BACKUP);
+    }
+
+    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    public void selectRestoreFolder() {
+        selectFolder(SELECT_FOLDER_CODE_FOR_RESTORE);
     }
 
     public void selectFolder(int code) {
@@ -54,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(i, code);
     }
 
+    //After selection of folder make backup or restore of files
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if ((requestCode == SELECT_FOLDER_CODE_FOR_BACKUP || requestCode == SELECT_FOLDER_CODE_FOR_RESTORE)
                 && resultCode == Activity.RESULT_OK) {
@@ -74,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void backup() {
+    private void backup() {
         if (spBackupFile != null && dpBackupFile != null) {
             try {
                 getBackupManager().backupAll();
@@ -85,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void restore() {
+    private void restore() {
         if (spRestoreFile != null && dpRestoreFile != null) {
             try {
                 getBackupManager().restoreAll();
