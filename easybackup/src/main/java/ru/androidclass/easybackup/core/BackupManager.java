@@ -8,19 +8,7 @@ import ru.androidclass.easybackup.core.exception.RestoreException;
  */
 public class BackupManager {
 
-    private static volatile BackupManager instance;
     private final BackupCreatorHolder mBackupCreatorHolder;
-
-    public static BackupManager create() {
-        if (instance == null) {
-            synchronized (BackupManager.class) {
-                if (instance == null) {
-                    instance = new BackupManager();
-                }
-            }
-        }
-        return instance;
-    }
 
     public void addBackupCreator(BackupCreator creator) {
         mBackupCreatorHolder.addJobCreator(creator);
@@ -34,7 +22,7 @@ public class BackupManager {
         mBackupCreatorHolder.restore();
     }
 
-    private BackupManager() {
+    public BackupManager() {
         mBackupCreatorHolder = new BackupCreatorHolder();
     }
 }
