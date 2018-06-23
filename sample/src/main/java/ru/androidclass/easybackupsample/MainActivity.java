@@ -33,9 +33,6 @@ import ru.androidclass.easybackupsample.db.entity.Lipsum;
 
 import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
 
-/**
- * Created by Dmitry Polozov <pdapnz@ya.ru> on 21.06.2018.
- */
 
 @RuntimePermissions
 public class MainActivity extends AppCompatActivity {
