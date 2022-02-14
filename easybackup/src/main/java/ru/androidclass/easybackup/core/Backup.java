@@ -1,7 +1,5 @@
 package ru.androidclass.easybackup.core;
 
-import java.io.FileNotFoundException;
-
 import ru.androidclass.easybackup.core.exception.BackupException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 

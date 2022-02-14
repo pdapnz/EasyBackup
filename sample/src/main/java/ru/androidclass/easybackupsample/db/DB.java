@@ -1,9 +1,10 @@
 package ru.androidclass.easybackupsample.db;
 
-import android.app.Application;
-import android.arch.persistence.room.Room;
-
 import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
+
+import android.app.Application;
+
+import androidx.room.Room;
 
 
 public class DB {

@@ -1,5 +1,7 @@
 package ru.androidclass.easybackupsample;
 
+import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -8,11 +10,12 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.nononsenseapps.filepicker.Utils;
@@ -30,8 +33,6 @@ import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupC
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
 import ru.androidclass.easybackupsample.db.DB;
 import ru.androidclass.easybackupsample.db.entity.Lipsum;
-
-import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
 
 
 @RuntimePermissions

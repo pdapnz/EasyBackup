@@ -1,8 +1,7 @@
 package ru.androidclass.easybackupsample.db.entity;
 
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.Index;
-import android.arch.persistence.room.PrimaryKey;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
 
 @Entity(tableName = "Lipsum")
 public class Lipsum {

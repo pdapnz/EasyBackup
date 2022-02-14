@@ -1,7 +1,7 @@
 package ru.androidclass.easybackupsample.db;
 
-import android.arch.persistence.room.Database;
-import android.arch.persistence.room.RoomDatabase;
+import androidx.room.Database;
+import androidx.room.RoomDatabase;
 
 import ru.androidclass.easybackupsample.db.dao.LipsumDao;
 import ru.androidclass.easybackupsample.db.entity.Lipsum;
