@@ -1,6 +1,7 @@
 package ru.androidclass.easybackup.core;
 
 import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 
 /**
@@ -14,11 +15,11 @@ public class BackupManager {
         mBackupCreatorHolder.addJobCreator(creator);
     }
 
-    public void backupAll() throws BackupException {
+    public void backupAll() throws BackupException, BackupInitializationException {
         mBackupCreatorHolder.backup();
     }
 
-    public void restoreAll() throws RestoreException {
+    public void restoreAll() throws RestoreException, BackupInitializationException {
         mBackupCreatorHolder.restore();
     }
 

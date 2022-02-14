@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 
 class BackupCreatorHolder {
@@ -23,13 +24,13 @@ class BackupCreatorHolder {
         mBackupCreators.remove(creator);
     }
 
-    public void backup() throws BackupException {
+    public void backup() throws BackupException, BackupInitializationException {
         for (BackupCreator backupCreator : mBackupCreators) {
             backupCreator.create().backup();
         }
     }
 
-    public void restore() throws RestoreException {
+    public void restore() throws RestoreException, BackupInitializationException {
         for (BackupCreator backupCreator : mBackupCreators) {
             backupCreator.create().restore();
         }

@@ -22,11 +22,11 @@
         android:text="Restore" />
 
 
-    <Button
-        android:id="@+id/drive"
-        android:layout_width="wrap_content"
+    <com.google.android.gms.common.SignInButton
+        android:layout_marginTop="60dp"
+        android:id="@+id/sign_in_button"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Drive" />
+        android:visibility="visible" />
 
 </LinearLayout>

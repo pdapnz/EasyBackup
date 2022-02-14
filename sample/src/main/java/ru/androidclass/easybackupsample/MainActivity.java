@@ -28,6 +28,7 @@ import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
 import ru.androidclass.easybackup.core.BackupManager;
 import ru.androidclass.easybackup.core.exception.BackupException;
+import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupCreator;
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
@@ -56,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
                 v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
         findViewById(R.id.restoreButton).setOnClickListener(
                 v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
+        findViewById(R.id.drive).setOnClickListener(view -> startActivity(new Intent(this, DriveActivity.class)));
 
         preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
         preferences.edit().putString("test_key", String.valueOf(Calendar.getInstance().getTime())).apply();
@@ -94,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
     //After selection of folder make backup or restore of files
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         if ((requestCode == SELECT_FOLDER_CODE_FOR_BACKUP || requestCode == SELECT_FOLDER_CODE_FOR_RESTORE)
                 && resultCode == Activity.RESULT_OK) {
             List<Uri> files = Utils.getSelectedFilesFromResult(intent);
@@ -117,10 +120,14 @@ public class MainActivity extends AppCompatActivity {
         if (spBackupFile != null && dpBackupFile != null) {
             try {
                 getBackupManager().backupAll();
+            } catch (BackupInitializationException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Initialization Failed!", Toast.LENGTH_LONG).show();
             } catch (BackupException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Backup Failed!", Toast.LENGTH_LONG).show();
             }
+
         }
     }
 
@@ -128,6 +135,9 @@ public class MainActivity extends AppCompatActivity {
         if (spRestoreFile != null && dpRestoreFile != null) {
             try {
                 getBackupManager().restoreAll();
+            } catch (BackupInitializationException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Initialization Failed!", Toast.LENGTH_LONG).show();
             } catch (RestoreException e) {
                 e.printStackTrace();
                 Toast.makeText(this, "Restore Failed!", Toast.LENGTH_LONG).show();
