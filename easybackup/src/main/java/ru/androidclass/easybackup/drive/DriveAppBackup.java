@@ -2,6 +2,8 @@ package ru.androidclass.easybackup.drive;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -16,6 +18,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import ru.androidclass.easybackup.core.Backup;
 import ru.androidclass.easybackup.core.BackupManager;
@@ -90,22 +95,37 @@ public class DriveAppBackup implements Backup {
         }
     }
 
+    private final ThreadPoolExecutor mWorkerThreadPool = new ThreadPoolExecutor(0, 4, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+
     @Override
     public void backup() throws BackupException {
         try {
             backupAll();
         } catch (BackupInitializationException e) {
+            e.printStackTrace();
             throw new BackupException(e);
         }
-        try {
-            for (java.io.File tempFile : mPrefsTempFiles)
-                pushFile(tempFile);
-            for (java.io.File tempFile : mDbsTempFiles)
-                pushFile(tempFile);
-        } catch (IOException e) {
-            throw new BackupException(e);
-        }
+        mWorkerThreadPool.execute(() -> {
+            try {
+                for (java.io.File tempFile : mPrefsTempFiles)
+                    pushFile(tempFile);
+                for (java.io.File tempFile : mDbsTempFiles)
+                    pushFile(tempFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+                /*runOnUiThread(() -> {
+                    throw new BackupException(e);
+                });*/
+            }
+        });
     }
+
+    private final Handler mMainThreadHandler = new Handler(Looper.getMainLooper());
+
+    public void runOnUiThread(Runnable r) {
+        mMainThreadHandler.post(r);
+    }
+
 
     @Override
     public void restore() throws RestoreException {
@@ -114,10 +134,13 @@ public class DriveAppBackup implements Backup {
         } catch (BackupInitializationException e) {
             throw new RestoreException(e);
         }
-        try {
-            pullFiles();
-        } catch (IOException e) {
-            throw new RestoreException(e);
-        }
+        mWorkerThreadPool.execute(() -> {
+            try {
+                pullFiles();
+            } catch (IOException e) {
+                e.printStackTrace();
+                //throw new RestoreException(e);
+            }
+        });
     }
 }
