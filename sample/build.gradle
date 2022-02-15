@@ -45,7 +45,7 @@ dependencies {
     annotationProcessor 'androidx.room:room-compiler:2.0.0'
 
     implementation 'com.google.android.gms:play-services-auth:20.1.0'
-    
+
     //Drive
     implementation('com.google.api-client:google-api-client-android:1.23.0') {
         exclude group: 'org.apache.httpcomponents'

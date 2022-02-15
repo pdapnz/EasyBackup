@@ -20,7 +20,7 @@ public class DriveAppBackupCreator implements BackupCreator {
     private final List<String> mDbsNames;
     private final Drive mDriveService;
 
-    public DriveAppBackupCreator(@NonNull Application application, Drive driveService, @Nullable List<String> prefsNames, @Nullable List<String> dbsNames) throws BackupInitializationException {
+    public DriveAppBackupCreator(@NonNull Application application, Drive driveService, @Nullable List<String> prefsNames, @Nullable List<String> dbsNames) {
         mApplication = application;
         mPrefsNames = prefsNames;
         mDbsNames = dbsNames;

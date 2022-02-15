@@ -2,8 +2,6 @@ package ru.androidclass.easybackup.drive;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -18,9 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import ru.androidclass.easybackup.core.Backup;
 import ru.androidclass.easybackup.core.BackupManager;
@@ -40,6 +35,7 @@ public class DriveAppBackup implements Backup {
     private final List<java.io.File> mDbsTempFiles = new ArrayList<>();
     private final BackupManager mBackupManager = new BackupManager();
     private final Drive mDriveService;
+    private final String mBackupFolderName;
 
 
     public DriveAppBackup(@NonNull Application application, Drive driveService, @Nullable List<String> prefsNames, @Nullable List<String> dbsNames) {
@@ -47,10 +43,11 @@ public class DriveAppBackup implements Backup {
         mPrefsNames = prefsNames;
         mDbsNames = dbsNames;
         mDriveService = driveService;
+        mBackupFolderName = "easyBackup_" + application.getPackageName();
 
         if (mPrefsNames != null && mPrefsNames.size() > 0) {
             for (String name : mPrefsNames) {
-                java.io.File tempFile = new java.io.File(application.getCacheDir(), "sp_backup_" + name);
+                java.io.File tempFile = new java.io.File(application.getCacheDir(), "backup.sp_" + name);
                 mPrefsTempFiles.add(tempFile);
                 mBackupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(
                         mApplication.getSharedPreferences(name, Context.MODE_PRIVATE), tempFile, tempFile));
@@ -58,7 +55,7 @@ public class DriveAppBackup implements Backup {
         }
         if (mDbsNames != null && mDbsNames.size() > 0) {
             for (String name : mDbsNames) {
-                java.io.File tempFile = new java.io.File(application.getCacheDir(), "db_backup_" + name);
+                java.io.File tempFile = new java.io.File(application.getCacheDir(), "backup.db_" + name);
                 mDbsTempFiles.add(tempFile);
                 mBackupManager.addBackupCreator(new SqliteFileBackupCreator(application, tempFile, tempFile, name));
             }
@@ -73,29 +70,71 @@ public class DriveAppBackup implements Backup {
         mBackupManager.restoreAll();
     }
 
-    private void pushFile(java.io.File inputFile) throws IOException {
+    private void pushFile(String folderId, java.io.File inputFile) throws IOException {
         File fileMetadata = new File();
         fileMetadata.setName(inputFile.getName());
-        fileMetadata.setParents(Collections.singletonList("appDataFolder"));
+        fileMetadata.setParents(Collections.singletonList(folderId));
         FileContent mediaContent = new FileContent(null, inputFile);
         File file = mDriveService.files().create(fileMetadata, mediaContent)
-                .setFields("id")
+                .setFields("id, name, createdTime")
                 .execute();
-        Log.d(TAG, "File ID: " + file.getId());
+        Log.d(TAG, "File created: " + file.getName() + " (" + file.getId() + ")" + " " + file.getCreatedTime());
     }
 
     private void pullFiles() throws IOException {
-        FileList files = mDriveService.files().list()
-                .setSpaces("appDataFolder")
-                .setFields("nextPageToken, files(id, name)")
-                .setPageSize(100)
-                .execute();
-        for (File file : files.getFiles()) {
-            Log.d(TAG, "Found file: " + file.getName() + " (" + file.getId() + ")");
-        }
+        String pageToken = null;
+        do {
+            FileList files = mDriveService.files().list()
+                    .setSpaces("appDataFolder")
+                    .setFields("nextPageToken, files(id, name, createdTime, mimeType)")
+                    .setOrderBy("createdTime desc")
+                    .setPageToken(pageToken)
+                    .execute();
+            for (File file : files.getFiles()) {
+                Log.d(TAG, "Found file: " + file.getCreatedTime() + " " + file.getName() + " " + file.getMimeType() + " (" + file.getId() + ")");
+            }
+            pageToken = files.getNextPageToken();
+        } while (pageToken != null);
+
+
     }
 
-    private final ThreadPoolExecutor mWorkerThreadPool = new ThreadPoolExecutor(0, 4, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    @Nullable
+    private File getBackupFolder() throws IOException {
+        FileList files = mDriveService.files().list()
+                .setQ("mimeType='application/vnd.google-apps.folder' and name='" + mBackupFolderName + "'")
+                .setSpaces("appDataFolder")
+                .setFields("nextPageToken, files(id, name, createdTime)")
+                .setOrderBy("createdTime desc")
+                .setPageSize(1)
+                .execute();
+        for (File file : files.getFiles()) {
+            Log.d(TAG, "Found folder: " + file.getName() + " (" + file.getId() + ")" + " " + file.getCreatedTime());
+            return file;
+        }
+        return null;
+    }
+
+    @NonNull
+    private File createBackupFolder() throws IOException {
+        File fileMetadata = new File();
+        fileMetadata.setParents(Collections.singletonList("appDataFolder"));
+        fileMetadata.setName(mBackupFolderName);
+        fileMetadata.setMimeType("application/vnd.google-apps.folder");
+        File file = mDriveService.files().create(fileMetadata)
+                .setFields("id, name, createdTime")
+                .execute();
+        Log.d(TAG, "Folder created: " + file.getName() + " (" + file.getId() + ")" + " " + file.getCreatedTime());
+        return file;
+    }
+
+    private void removeBackupFolder(String folderId) throws IOException {
+        mDriveService.files()
+                .delete(folderId)
+                .execute();
+        Log.d(TAG, "Folder with id=" + folderId + " was removed.");
+    }
+
 
     @Override
     public void backup() throws BackupException {
@@ -105,27 +144,23 @@ public class DriveAppBackup implements Backup {
             e.printStackTrace();
             throw new BackupException(e);
         }
-        mWorkerThreadPool.execute(() -> {
-            try {
-                for (java.io.File tempFile : mPrefsTempFiles)
-                    pushFile(tempFile);
-                for (java.io.File tempFile : mDbsTempFiles)
-                    pushFile(tempFile);
-            } catch (IOException e) {
-                e.printStackTrace();
-                /*runOnUiThread(() -> {
-                    throw new BackupException(e);
-                });*/
-            }
-        });
+        try {
+            File folder = getBackupFolder();
+            //recreate folder if exist (to store only last actual backup)
+            if (folder != null)
+                removeBackupFolder(folder.getId());
+            folder = createBackupFolder();
+
+
+            for (java.io.File tempFile : mPrefsTempFiles)
+                pushFile(folder.getId(), tempFile);
+            for (java.io.File tempFile : mDbsTempFiles)
+                pushFile(folder.getId(), tempFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new BackupException(e);
+        }
     }
-
-    private final Handler mMainThreadHandler = new Handler(Looper.getMainLooper());
-
-    public void runOnUiThread(Runnable r) {
-        mMainThreadHandler.post(r);
-    }
-
 
     @Override
     public void restore() throws RestoreException {
@@ -134,13 +169,11 @@ public class DriveAppBackup implements Backup {
         } catch (BackupInitializationException e) {
             throw new RestoreException(e);
         }
-        mWorkerThreadPool.execute(() -> {
-            try {
-                pullFiles();
-            } catch (IOException e) {
-                e.printStackTrace();
-                //throw new RestoreException(e);
-            }
-        });
+        try {
+            pullFiles();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RestoreException(e);
+        }
     }
 }

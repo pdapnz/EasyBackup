@@ -34,6 +34,9 @@ import com.google.api.services.drive.DriveScopes;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import ru.androidclass.easybackup.core.BackupManager;
 import ru.androidclass.easybackup.core.exception.BackupException;
@@ -136,34 +139,40 @@ public class DriveActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.status)).setText("Google Drive backup using account: " + account.getDisplayName());
             findViewById(R.id.sign_in_button).setVisibility(View.GONE);
         } else {
-
             ((TextView) findViewById(R.id.status)).setText("To backup using Google Drive Please Sign In:");
             findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
         }
     }
 
+    private final ThreadPoolExecutor mWorkerThreadPool = new ThreadPoolExecutor(0, 4, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+
+
     private void backup() {
-        try {
-            getBackupManager().backupAll();
-        } catch (BackupInitializationException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Initialization Failed!", Toast.LENGTH_LONG).show();
-        } catch (BackupException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Backup Failed!", Toast.LENGTH_LONG).show();
-        }
+        mWorkerThreadPool.execute(() -> {
+            try {
+                getBackupManager().backupAll();
+            } catch (BackupInitializationException e) {
+                e.printStackTrace();
+                toast("Initialization Failed!");
+            } catch (BackupException e) {
+                e.printStackTrace();
+                toast("Backup Failed!");
+            }
+        });
     }
 
     private void restore() {
-        try {
-            getBackupManager().restoreAll();
-        } catch (BackupInitializationException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Initialization Failed!", Toast.LENGTH_LONG).show();
-        } catch (RestoreException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Restore Failed!", Toast.LENGTH_LONG).show();
-        }
+        mWorkerThreadPool.execute(() -> {
+            try {
+                getBackupManager().restoreAll();
+            } catch (BackupInitializationException e) {
+                e.printStackTrace();
+                toast("Initialization Failed!");
+            } catch (RestoreException e) {
+                e.printStackTrace();
+                toast("Restore Failed!");
+            }
+        });
     }
 
     private BackupManager getBackupManager() throws BackupInitializationException {
@@ -184,7 +193,11 @@ public class DriveActivity extends AppCompatActivity {
             );
             return backupManager;
         }
-        Toast.makeText(this, "To make backup please sign in", Toast.LENGTH_LONG).show();
-        throw new BackupInitializationException(new Throwable("Please sign in"));
+        toast("To make backup please sign in");
+        throw new BackupInitializationException(new Throwable("To make backup please sign in"));
+    }
+
+    public void toast(String message) {
+        runOnUiThread(() -> Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show());
     }
 }
