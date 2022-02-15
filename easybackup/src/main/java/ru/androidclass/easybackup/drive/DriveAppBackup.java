@@ -28,9 +28,6 @@ import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
 public class DriveAppBackup implements Backup {
     private static final String TAG = DriveAppBackup.class.getSimpleName();
 
-    private final Application mApplication;
-    private final List<String> mPrefsNames;
-    private final List<String> mDbsNames;
     private final List<java.io.File> mPrefsTempFiles = new ArrayList<>();
     private final List<java.io.File> mDbsTempFiles = new ArrayList<>();
     private final BackupManager mBackupManager = new BackupManager();
@@ -39,22 +36,19 @@ public class DriveAppBackup implements Backup {
 
 
     public DriveAppBackup(@NonNull Application application, Drive driveService, @Nullable List<String> prefsNames, @Nullable List<String> dbsNames) {
-        mApplication = application;
-        mPrefsNames = prefsNames;
-        mDbsNames = dbsNames;
         mDriveService = driveService;
         mBackupFolderName = "easyBackup_" + application.getPackageName();
 
-        if (mPrefsNames != null && mPrefsNames.size() > 0) {
-            for (String name : mPrefsNames) {
+        if (prefsNames != null && prefsNames.size() > 0) {
+            for (String name : prefsNames) {
                 java.io.File tempFile = new java.io.File(application.getCacheDir(), "backup.sp_" + name);
                 mPrefsTempFiles.add(tempFile);
                 mBackupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(
-                        mApplication.getSharedPreferences(name, Context.MODE_PRIVATE), tempFile, tempFile));
+                        application.getSharedPreferences(name, Context.MODE_PRIVATE), tempFile, tempFile));
             }
         }
-        if (mDbsNames != null && mDbsNames.size() > 0) {
-            for (String name : mDbsNames) {
+        if (dbsNames != null && dbsNames.size() > 0) {
+            for (String name : dbsNames) {
                 java.io.File tempFile = new java.io.File(application.getCacheDir(), "backup.db_" + name);
                 mDbsTempFiles.add(tempFile);
                 mBackupManager.addBackupCreator(new SqliteFileBackupCreator(application, tempFile, tempFile, name));
