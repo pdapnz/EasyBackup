@@ -21,6 +21,8 @@ import com.nononsenseapps.filepicker.FilePickerActivity;
 import com.nononsenseapps.filepicker.Utils;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
@@ -32,6 +34,7 @@ import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupCreator;
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
+import ru.androidclass.easybackup.storage.StorageFilesBackupCreator;
 import ru.androidclass.easybackupsample.db.DB;
 import ru.androidclass.easybackupsample.db.entity.Lipsum;
 
@@ -43,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
     private File spRestoreFile;
     private File dpBackupFile;
     private File dpRestoreFile;
+    private File ifBackupFile;
+    private File ifRestoreFile;
     private static final String SPNAME = "prefs.xml";
     private static final int SELECT_FOLDER_CODE_FOR_BACKUP = 1001;
     private static final int SELECT_FOLDER_CODE_FOR_RESTORE = 1002;
@@ -65,6 +70,8 @@ public class MainActivity extends AppCompatActivity {
         DB db = new DB(getApplication());
         List<Lipsum> lipsums = db.getDB().lipsumDao().getLipsums();
         Log.d(TAG, "lipsums " + lipsums);
+
+        createFile(getFilesDir(), "textBackupRestore.txt", String.valueOf(Calendar.getInstance().getTime()));
     }
 
 
@@ -105,11 +112,13 @@ public class MainActivity extends AppCompatActivity {
                 if (requestCode == SELECT_FOLDER_CODE_FOR_BACKUP) {
                     spBackupFile = new File(file, SPNAME);
                     dpBackupFile = new File(file, DATABASE_NAME);
+                    ifBackupFile = new File(file, "internalFiles.zip");
                     backup();
                 }
                 if (requestCode == SELECT_FOLDER_CODE_FOR_RESTORE) {
                     spRestoreFile = new File(file, SPNAME);
                     dpRestoreFile = new File(file, DATABASE_NAME);
+                    ifRestoreFile = new File(file, "internalFiles.zip");
                     restore();
                 }
             }
@@ -117,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void backup() {
-        if (spBackupFile != null && dpBackupFile != null) {
+        if (spBackupFile != null && dpBackupFile != null && ifBackupFile != null) {
             try {
                 getBackupManager().backupAll();
             } catch (BackupInitializationException e) {
@@ -132,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void restore() {
-        if (spRestoreFile != null && dpRestoreFile != null) {
+        if (spRestoreFile != null && dpRestoreFile != null && ifRestoreFile != null) {
             try {
                 getBackupManager().restoreAll();
             } catch (BackupInitializationException e) {
@@ -149,6 +158,21 @@ public class MainActivity extends AppCompatActivity {
         BackupManager backupManager = new BackupManager();
         backupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(preferences, spBackupFile, spRestoreFile));
         backupManager.addBackupCreator(new SqliteFileBackupCreator(getApplication(), dpBackupFile, dpRestoreFile, DATABASE_NAME));
+        backupManager.addBackupCreator(new StorageFilesBackupCreator(dpBackupFile, dpRestoreFile, getFilesDir().getPath()));
         return backupManager;
     }
+
+
+    public void createFile(File dir, String fileName, String body) {
+        try {
+            File textFile = new File(dir, fileName);
+            FileWriter writer = new FileWriter(textFile);
+            writer.append(body);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

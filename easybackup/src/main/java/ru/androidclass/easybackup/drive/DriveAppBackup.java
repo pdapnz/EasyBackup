@@ -13,6 +13,8 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,12 +32,17 @@ public class DriveAppBackup implements Backup {
 
     private final List<java.io.File> mPrefsTempFiles = new ArrayList<>();
     private final List<java.io.File> mDbsTempFiles = new ArrayList<>();
+    private final List<java.io.File> mFilesTempFiles = new ArrayList<>();
     private final BackupManager mBackupManager = new BackupManager();
     private final Drive mDriveService;
     private final String mBackupFolderName;
 
 
-    public DriveAppBackup(@NonNull Application application, Drive driveService, @Nullable List<String> prefsNames, @Nullable List<String> dbsNames) {
+    public DriveAppBackup(@NonNull Application application, Drive driveService,
+                          @Nullable List<String> prefsNames,
+                          @Nullable List<String> dbsNames,
+                          @Nullable List<String> filePaths
+    ) throws BackupInitializationException {
         mDriveService = driveService;
         mBackupFolderName = "easyBackup_" + application.getPackageName();
 
@@ -52,6 +59,19 @@ public class DriveAppBackup implements Backup {
                 java.io.File tempFile = new java.io.File(application.getCacheDir(), "backup.db_" + name);
                 mDbsTempFiles.add(tempFile);
                 mBackupManager.addBackupCreator(new SqliteFileBackupCreator(application, tempFile, tempFile, name));
+            }
+        }
+        if (filePaths != null && filePaths.size() > 0) {
+            for (String path : filePaths) {
+                java.io.File tempFile = null;
+                try {
+                    tempFile = new java.io.File(application.getCacheDir(), "files.zip_" + URLEncoder.encode(path, "utf-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                    throw new BackupInitializationException(e);
+                }
+                mFilesTempFiles.add(tempFile);
+                mBackupManager.addBackupCreator(new SqliteFileBackupCreator(application, tempFile, tempFile, path));
             }
         }
     }

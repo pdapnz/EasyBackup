@@ -189,7 +189,8 @@ public class DriveActivity extends AppCompatActivity {
                     getApplication(),
                     driveService,
                     Collections.singletonList(getPackageName()),
-                    Collections.singletonList(DATABASE_NAME))
+                    Collections.singletonList(DATABASE_NAME),
+                    Collections.singletonList(getFilesDir().getPath()))
             );
             return backupManager;
         }
