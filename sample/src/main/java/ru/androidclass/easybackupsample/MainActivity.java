@@ -1,5 +1,6 @@
 package ru.androidclass.easybackupsample;
 
+import static ru.androidclass.easybackupsample.PathUtil.getPath;
 import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
 
 import android.Manifest;
@@ -7,18 +8,14 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.nononsenseapps.filepicker.FilePickerActivity;
-import com.nononsenseapps.filepicker.Utils;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -60,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.backupButton).setOnClickListener(
                 v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
         findViewById(R.id.restoreButton).setOnClickListener(
-                v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
+                v -> MainActivityPermissionsDispatcher.selectRestoreFolderWithPermissionCheck(this));
         findViewById(R.id.drive).setOnClickListener(view -> startActivity(new Intent(this, DriveBackupActivity.class)));
 
         SharedPreferences preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
@@ -92,12 +89,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void selectFolder(int code) {
-        Intent i = new Intent(this, FilePickerActivity.class);
-        i.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
-        i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
-        i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_DIR);
-        i.putExtra(FilePickerActivity.EXTRA_START_PATH, Environment.getExternalStorageDirectory().getPath());
-        startActivityForResult(i, code);
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        i.addCategory(Intent.CATEGORY_DEFAULT);
+        startActivityForResult(Intent.createChooser(i, "Choose directory for backup"), code);
     }
 
     //After selection of folder make backup or restore of files
@@ -105,19 +99,22 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, intent);
         if ((requestCode == SELECT_FOLDER_CODE_FOR_BACKUP || requestCode == SELECT_FOLDER_CODE_FOR_RESTORE)
                 && resultCode == Activity.RESULT_OK) {
-            List<Uri> files = Utils.getSelectedFilesFromResult(intent);
-            if (!files.isEmpty()) {
-                File file = Utils.getFileForUri(files.get(0));
+            String path = getPath(this,
+                    DocumentsContract.buildDocumentUriUsingTree(intent.getData(), DocumentsContract.getTreeDocumentId(intent.getData())));
+            Log.d(TAG, "selected path=" + path);
+            if (path != null) {
                 if (requestCode == SELECT_FOLDER_CODE_FOR_BACKUP) {
-                    spBackupFile = new File(file, SPNAME);
-                    dpBackupFile = new File(file, DATABASE_NAME);
-                    ifBackupFile = new File(file, "internalFiles.zip");
+                    spBackupFile = new File(path, SPNAME);
+                    dpBackupFile = new File(path, DATABASE_NAME);
+                    ifBackupFile = new File(path, "internalFiles.zip");
+                    Log.d(TAG, "starting backup");
                     backup();
                 }
                 if (requestCode == SELECT_FOLDER_CODE_FOR_RESTORE) {
-                    spRestoreFile = new File(file, SPNAME);
-                    dpRestoreFile = new File(file, DATABASE_NAME);
-                    ifRestoreFile = new File(file, "internalFiles.zip");
+                    spRestoreFile = new File(path, SPNAME);
+                    dpRestoreFile = new File(path, DATABASE_NAME);
+                    ifRestoreFile = new File(path, "internalFiles.zip");
+                    Log.d(TAG, "starting restore");
                     restore();
                 }
             }
@@ -127,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private void backup() {
         if (spBackupFile != null && dpBackupFile != null && ifBackupFile != null) {
             try {
+                Log.d(TAG, "starting backupAll");
                 getBackupManager().backupAll();
             } catch (BackupInitializationException e) {
                 e.printStackTrace();
@@ -142,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
     private void restore() {
         if (spRestoreFile != null && dpRestoreFile != null && ifRestoreFile != null) {
             try {
+                Log.d(TAG, "starting restoreAll");
                 getBackupManager().restoreAll();
             } catch (BackupInitializationException e) {
                 e.printStackTrace();
@@ -157,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
         BackupManager backupManager = new BackupManager();
         backupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(getApplication(), getPackageName(), spBackupFile, spRestoreFile));
         backupManager.addBackupCreator(new SqliteFileBackupCreator(getApplication(), dpBackupFile, dpRestoreFile, DATABASE_NAME));
-        backupManager.addBackupCreator(new StorageFilesBackupCreator(dpBackupFile, dpRestoreFile, getFilesDir().getPath()));
+        backupManager.addBackupCreator(new StorageFilesBackupCreator(ifBackupFile, ifRestoreFile, getFilesDir().getPath()));
         return backupManager;
     }
 

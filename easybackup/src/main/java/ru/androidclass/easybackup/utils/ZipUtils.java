@@ -1,9 +1,10 @@
 package ru.androidclass.easybackup.utils;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,63 +18,39 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
+    private static final String TAG = ZipUtils.class.getSimpleName();
 
-    public static void zip(String sourcePath, File toLocation) throws IOException {
-        final int BUFFER = 2048;
-        File sourceFile = new File(sourcePath);
-        BufferedInputStream origin = null;
-        FileOutputStream dest = new FileOutputStream(toLocation);
-        ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(
-                dest));
-        if (sourceFile.isDirectory()) {
-            zipSubFolder(out, sourceFile, sourceFile.getParent().length());
+    public static void zipFolder(File srcFolder, File destZipFile) throws IOException {
+        try (FileOutputStream fileWriter = new FileOutputStream(destZipFile);
+             ZipOutputStream zip = new ZipOutputStream(fileWriter)) {
+
+            addFolderToZip(srcFolder, srcFolder, zip);
+        }
+    }
+
+    private static void addFileToZip(File rootPath, File srcFile, ZipOutputStream zip) throws IOException {
+
+        if (srcFile.isDirectory()) {
+            addFolderToZip(rootPath, srcFile, zip);
         } else {
-            byte data[] = new byte[BUFFER];
-            FileInputStream fi = new FileInputStream(sourcePath);
-            origin = new BufferedInputStream(fi, BUFFER);
-            ZipEntry entry = new ZipEntry(getLastPathComponent(sourcePath));
-            entry.setTime(sourceFile.lastModified()); // to keep modification time after unzipping
-            out.putNextEntry(entry);
-            int count;
-            while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                out.write(data, 0, count);
-            }
-        }
-        out.close();
-    }
-
-    private static void zipSubFolder(ZipOutputStream out, File folder, int basePathLength) throws IOException {
-        final int BUFFER = 2048;
-        File[] fileList = folder.listFiles();
-        BufferedInputStream origin = null;
-        for (File file : fileList) {
-            if (file.isDirectory()) {
-                zipSubFolder(out, file, basePathLength);
-            } else {
-                byte data[] = new byte[BUFFER];
-                String unmodifiedFilePath = file.getPath();
-                String relativePath = unmodifiedFilePath
-                        .substring(basePathLength);
-                FileInputStream fi = new FileInputStream(unmodifiedFilePath);
-                origin = new BufferedInputStream(fi, BUFFER);
-                ZipEntry entry = new ZipEntry(relativePath);
-                entry.setTime(file.lastModified()); // to keep modification time after unzipping
-                out.putNextEntry(entry);
-                int count;
-                while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                    out.write(data, 0, count);
+            byte[] buf = new byte[1024];
+            int len;
+            try (FileInputStream in = new FileInputStream(srcFile)) {
+                String name = srcFile.getPath();
+                name = name.replace(rootPath.getPath(), "");
+                Log.d(TAG, "Zip " + srcFile + " to " + name);
+                zip.putNextEntry(new ZipEntry(name));
+                while ((len = in.read(buf)) > 0) {
+                    zip.write(buf, 0, len);
                 }
-                origin.close();
             }
         }
     }
 
-    public static String getLastPathComponent(String filePath) {
-        String[] segments = filePath.split("/");
-        if (segments.length == 0)
-            return "";
-        String lastPathComponent = segments[segments.length - 1];
-        return lastPathComponent;
+    private static void addFolderToZip(File rootPath, File srcFolder, ZipOutputStream zip) throws IOException {
+        for (File fileName : srcFolder.listFiles()) {
+            addFileToZip(rootPath, fileName, zip);
+        }
     }
 
     public static void unZip(File from, String destPath) throws IOException {

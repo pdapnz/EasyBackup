@@ -167,6 +167,8 @@ public class DriveAppBackup implements Backup {
                 pushFile(folder.getId(), tempFile);
             for (java.io.File tempFile : mDbsTempFiles)
                 pushFile(folder.getId(), tempFile);
+            for (java.io.File tempFile : mFilesTempFiles)
+                pushFile(folder.getId(), tempFile);
         } catch (IOException e) {
             e.printStackTrace();
             throw new BackupException(e);

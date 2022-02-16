@@ -25,7 +25,7 @@ public class StorageFilesBackup implements Backup {
     @Override
     public void backup() throws BackupException {
         try {
-            ZipUtils.zip(mSourcePath, mBackupFile);
+            ZipUtils.zipFolder(new File(mSourcePath), mBackupFile);
         } catch (IOException e) {
             e.printStackTrace();
             throw new BackupException(e);

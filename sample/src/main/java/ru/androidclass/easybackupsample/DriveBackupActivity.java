@@ -146,7 +146,6 @@ public class DriveBackupActivity extends AppCompatActivity {
                 e.printStackTrace();
                 toast("Initialization Failed!");
             }
-
             updateActualBackup();
         } else {
             findViewById(R.id.actualBackups).setVisibility(View.GONE);
@@ -160,10 +159,13 @@ public class DriveBackupActivity extends AppCompatActivity {
 
     private void backup() {
         mWorkerThreadPool.execute(() -> {
+            runOnUiThread(() -> showLoading(true));
             try {
-                if (mBackupManager != null) mBackupManager.backupAll();
+                if (mBackupManager != null)
+                    mBackupManager.backupAll();
                 else
                     toast("Backup Failed!");
+
             } catch (BackupInitializationException e) {
                 e.printStackTrace();
                 toast("Initialization Failed!");
@@ -171,13 +173,17 @@ public class DriveBackupActivity extends AppCompatActivity {
                 e.printStackTrace();
                 toast("Backup Failed!");
             }
+            updateActualBackup();
         });
     }
 
     private void restore() {
+        showLoading(true);
         mWorkerThreadPool.execute(() -> {
+            runOnUiThread(() -> showLoading(true));
             try {
-                if (mBackupManager != null) mBackupManager.restoreAll();
+                if (mBackupManager != null)
+                    mBackupManager.restoreAll();
                 else
                     toast("Restore Failed!");
             } catch (BackupInitializationException e) {
@@ -187,10 +193,12 @@ public class DriveBackupActivity extends AppCompatActivity {
                 e.printStackTrace();
                 toast("Restore Failed!");
             }
+            updateActualBackup();
         });
     }
 
     public void updateActualBackup() {
+        showLoading(true);
         mWorkerThreadPool.execute(() -> {
             try {
                 if (mDriveAppBackup != null) {
@@ -204,6 +212,7 @@ public class DriveBackupActivity extends AppCompatActivity {
                             findViewById(R.id.backupList).setVisibility(View.GONE);
                             findViewById(R.id.emptyBackup).setVisibility(View.VISIBLE);
                         }
+                        showLoading(false);
                     });
                 }
             } catch (IOException e) {
@@ -212,7 +221,11 @@ public class DriveBackupActivity extends AppCompatActivity {
         });
     }
 
-    public void toast(String message) {
+    private void toast(String message) {
         runOnUiThread(() -> Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show());
+    }
+
+    private void showLoading(boolean isLoading) {
+        findViewById(R.id.loading).setVisibility(isLoading ? View.VISIBLE : View.GONE);
     }
 }
