@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".DriveActivity" />
+        <activity android:name=".DriveBackupActivity" />
 
         <activity
             android:name="com.nononsenseapps.filepicker.FilePickerActivity"

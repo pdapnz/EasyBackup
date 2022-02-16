@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_backups">No backup have been created. To create a backup, click the \'CREATE BUTTON\' button</string>
+    <string name="backup_title_list">Actual backup:</string>
+    <string name="restore_backup_button">Restore</string>
+    <string name="create_backup">Create backup</string>
+    <string name="google_account_used_for_backup">Google account used for backup:</string>
+    <string name="google_sign_in_notice">To backup or restore app data using Google Drive Please Sign In at you Google account:</string>
+</resources>

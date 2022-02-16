@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String SPNAME = "prefs.xml";
     private static final int SELECT_FOLDER_CODE_FOR_BACKUP = 1001;
     private static final int SELECT_FOLDER_CODE_FOR_RESTORE = 1002;
-    private SharedPreferences preferences;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -62,9 +61,9 @@ public class MainActivity extends AppCompatActivity {
                 v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
         findViewById(R.id.restoreButton).setOnClickListener(
                 v -> MainActivityPermissionsDispatcher.selectBackupFolderWithPermissionCheck(this));
-        findViewById(R.id.drive).setOnClickListener(view -> startActivity(new Intent(this, DriveActivity.class)));
+        findViewById(R.id.drive).setOnClickListener(view -> startActivity(new Intent(this, DriveBackupActivity.class)));
 
-        preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+        SharedPreferences preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
         preferences.edit().putString("test_key", String.valueOf(Calendar.getInstance().getTime())).apply();
 
         DB db = new DB(getApplication());
@@ -156,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
     private BackupManager getBackupManager() {
         BackupManager backupManager = new BackupManager();
-        backupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(preferences, spBackupFile, spRestoreFile));
+        backupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(getApplication(), getPackageName(), spBackupFile, spRestoreFile));
         backupManager.addBackupCreator(new SqliteFileBackupCreator(getApplication(), dpBackupFile, dpRestoreFile, DATABASE_NAME));
         backupManager.addBackupCreator(new StorageFilesBackupCreator(dpBackupFile, dpRestoreFile, getFilesDir().getPath()));
         return backupManager;

@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -23,7 +22,6 @@ import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -31,6 +29,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -42,20 +41,22 @@ import ru.androidclass.easybackup.core.BackupManager;
 import ru.androidclass.easybackup.core.exception.BackupException;
 import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
-import ru.androidclass.easybackup.drive.DriveAppBackupCreator;
+import ru.androidclass.easybackup.drive.DriveAppBackup;
 import ru.androidclass.easybackupsample.db.DB;
 import ru.androidclass.easybackupsample.db.entity.Lipsum;
 
-public class DriveActivity extends AppCompatActivity {
-    private static final String TAG = DriveActivity.class.getSimpleName();
+public class DriveBackupActivity extends AppCompatActivity {
+    private static final String TAG = DriveBackupActivity.class.getSimpleName();
 
     private static final int RC_SIGN_IN = 9001;
     private GoogleSignInClient mGoogleSignInClient;
+    private DriveAppBackup mDriveAppBackup;
+    private BackupManager mBackupManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_drive);
+        setContentView(R.layout.activity_drive_backup);
 
         findViewById(R.id.backupButton).setOnClickListener(view -> backup());
         findViewById(R.id.restoreButton).setOnClickListener(view -> restore());
@@ -81,12 +82,8 @@ public class DriveActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if (account != null && GoogleSignIn.hasPermissions(account, new Scope(Scopes.DRIVE_APPFOLDER))) {
-            updateUI(account);
-        } else {
-            updateUI(null);
-        }
+        updateUI();
+
     }
 
     @Override
@@ -100,14 +97,12 @@ public class DriveActivity extends AppCompatActivity {
 
     private void handleSignInResult(@Nullable Task<GoogleSignInAccount> completedTask) {
         Log.d(TAG, "handleSignInResult:" + completedTask.isSuccessful());
-
         try {
-            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-            updateUI(account);
+            completedTask.getResult(ApiException.class);
         } catch (ApiException e) {
             Log.w(TAG, "handleSignInResult:error", e);
-            updateUI(null);
         }
+        updateUI();
     }
 
     private void signIn() {
@@ -116,41 +111,59 @@ public class DriveActivity extends AppCompatActivity {
     }
 
     private void signOut() {
-        mGoogleSignInClient.signOut().addOnCompleteListener(this, new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                updateUI(null);
-            }
-        });
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> updateUI());
     }
 
     private void revokeAccess() {
-        mGoogleSignInClient.revokeAccess().addOnCompleteListener(this,
-                new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        updateUI(null);
-                    }
-                });
+        mGoogleSignInClient.revokeAccess().addOnCompleteListener(this, task -> updateUI());
     }
 
-    private void updateUI(@Nullable GoogleSignInAccount account) {
-        if (account != null) {
-            ((TextView) findViewById(R.id.status)).setText("Google Drive backup using account: " + account.getDisplayName());
-            findViewById(R.id.sign_in_button).setVisibility(View.GONE);
+    private void updateUI() {
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if (account != null && GoogleSignIn.hasPermissions(account, new Scope(Scopes.DRIVE_APPFOLDER))) {
+            ((TextView) findViewById(R.id.accountName)).setText(account.getDisplayName());
+            findViewById(R.id.actualBackups).setVisibility(View.VISIBLE);
+            findViewById(R.id.googleSignIn).setVisibility(View.GONE);
+
+            GoogleAccountCredential credential = GoogleAccountCredential.usingOAuth2(this, Collections.singleton(DriveScopes.DRIVE_APPDATA));
+            credential.setSelectedAccount(account.getAccount());
+
+            Drive driveService = new Drive.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
+                    .setApplicationName(getString(R.string.app_name))
+                    .build();
+            try {
+                BackupManager backupManager = new BackupManager();
+                mDriveAppBackup = new DriveAppBackup(
+                        getApplication(),
+                        driveService,
+                        Collections.singletonList(getPackageName()),
+                        Collections.singletonList(DATABASE_NAME),
+                        Collections.singletonList(getFilesDir().getPath())
+                );
+                backupManager.addBackupCreator(() -> mDriveAppBackup);
+                mBackupManager = backupManager;
+            } catch (BackupInitializationException e) {
+                e.printStackTrace();
+                toast("Initialization Failed!");
+            }
+
+            updateActualBackup();
         } else {
-            ((TextView) findViewById(R.id.status)).setText("To backup using Google Drive Please Sign In:");
-            findViewById(R.id.sign_in_button).setVisibility(View.VISIBLE);
+            findViewById(R.id.actualBackups).setVisibility(View.GONE);
+            findViewById(R.id.googleSignIn).setVisibility(View.VISIBLE);
+            mDriveAppBackup = null;
+            mBackupManager = null;
         }
     }
 
     private final ThreadPoolExecutor mWorkerThreadPool = new ThreadPoolExecutor(0, 4, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
-
     private void backup() {
         mWorkerThreadPool.execute(() -> {
             try {
-                getBackupManager().backupAll();
+                if (mBackupManager != null) mBackupManager.backupAll();
+                else
+                    toast("Backup Failed!");
             } catch (BackupInitializationException e) {
                 e.printStackTrace();
                 toast("Initialization Failed!");
@@ -164,7 +177,9 @@ public class DriveActivity extends AppCompatActivity {
     private void restore() {
         mWorkerThreadPool.execute(() -> {
             try {
-                getBackupManager().restoreAll();
+                if (mBackupManager != null) mBackupManager.restoreAll();
+                else
+                    toast("Restore Failed!");
             } catch (BackupInitializationException e) {
                 e.printStackTrace();
                 toast("Initialization Failed!");
@@ -175,27 +190,26 @@ public class DriveActivity extends AppCompatActivity {
         });
     }
 
-    private BackupManager getBackupManager() throws BackupInitializationException {
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if (account != null && GoogleSignIn.hasPermissions(account, new Scope(Scopes.DRIVE_APPFOLDER))) {
-            GoogleAccountCredential credential = GoogleAccountCredential.usingOAuth2(this, Collections.singleton(DriveScopes.DRIVE_APPDATA));
-            credential.setSelectedAccount(account.getAccount());
-
-            Drive driveService = new Drive.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance(), credential)
-                    .setApplicationName(getString(R.string.app_name))
-                    .build();
-            BackupManager backupManager = new BackupManager();
-            backupManager.addBackupCreator(new DriveAppBackupCreator(
-                    getApplication(),
-                    driveService,
-                    Collections.singletonList(getPackageName()),
-                    Collections.singletonList(DATABASE_NAME),
-                    Collections.singletonList(getFilesDir().getPath()))
-            );
-            return backupManager;
-        }
-        toast("To make backup please sign in");
-        throw new BackupInitializationException(new Throwable("To make backup please sign in"));
+    public void updateActualBackup() {
+        mWorkerThreadPool.execute(() -> {
+            try {
+                if (mDriveAppBackup != null) {
+                    final com.google.api.services.drive.model.File file = mDriveAppBackup.getBackupFolder();
+                    runOnUiThread(() -> {
+                        if (file != null) {
+                            ((TextView) findViewById(R.id.actualBackupName)).setText(file.getCreatedTime().toString());
+                            findViewById(R.id.backupList).setVisibility(View.VISIBLE);
+                            findViewById(R.id.emptyBackup).setVisibility(View.GONE);
+                        } else {
+                            findViewById(R.id.backupList).setVisibility(View.GONE);
+                            findViewById(R.id.emptyBackup).setVisibility(View.VISIBLE);
+                        }
+                    });
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void toast(String message) {

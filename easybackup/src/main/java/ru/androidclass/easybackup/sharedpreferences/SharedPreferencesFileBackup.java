@@ -1,6 +1,8 @@
 package ru.androidclass.easybackup.sharedpreferences;
 
 import android.annotation.SuppressLint;
+import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.io.File;
@@ -24,8 +26,8 @@ public class SharedPreferencesFileBackup implements Backup {
     private File mBackupFile;
     private File mRestoreFile;
 
-    public SharedPreferencesFileBackup(SharedPreferences sharedPreferences, File backupFile, File restoreFile) {
-        mSharedPreferences = sharedPreferences;
+    public SharedPreferencesFileBackup(Application application, String sharedPreferencesName, File backupFile, File restoreFile) {
+        mSharedPreferences = application.getSharedPreferences(sharedPreferencesName, Context.MODE_PRIVATE);
         mBackupFile = backupFile;
         mRestoreFile = restoreFile;
     }

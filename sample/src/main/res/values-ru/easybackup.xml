@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_backups">Резервная копия не найдена. Чтобы создать резервную копию нажмите кнопку \'СОЗДАТЬ РЕЗЕРВНУЮ КОПИЮ\'</string>
+    <string name="backup_title_list">Актуальная резервная копия:</string>
+    <string name="restore_backup_button">Восстановить</string>
+    <string name="create_backup">Создать резервную копию</string>
+    <string name="google_account_used_for_backup">Google-аккаунт для резервного копирования:</string>
+    <string name="google_sign_in_notice">Чтобы сделать резервное копирование или восстановить данные приложения через Google Drive, пожалуйста войдите в Google-аккаунт:</string>
+</resources>

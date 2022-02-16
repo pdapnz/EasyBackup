@@ -1,7 +1,6 @@
 package ru.androidclass.easybackup.drive;
 
 import android.app.Application;
-import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -26,6 +25,7 @@ import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupCreator;
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
+import ru.androidclass.easybackup.storage.StorageFilesBackupCreator;
 
 public class DriveAppBackup implements Backup {
     private static final String TAG = DriveAppBackup.class.getSimpleName();
@@ -50,8 +50,7 @@ public class DriveAppBackup implements Backup {
             for (String name : prefsNames) {
                 java.io.File tempFile = new java.io.File(application.getCacheDir(), "backup.sp_" + name);
                 mPrefsTempFiles.add(tempFile);
-                mBackupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(
-                        application.getSharedPreferences(name, Context.MODE_PRIVATE), tempFile, tempFile));
+                mBackupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(application, name, tempFile, tempFile));
             }
         }
         if (dbsNames != null && dbsNames.size() > 0) {
@@ -71,7 +70,7 @@ public class DriveAppBackup implements Backup {
                     throw new BackupInitializationException(e);
                 }
                 mFilesTempFiles.add(tempFile);
-                mBackupManager.addBackupCreator(new SqliteFileBackupCreator(application, tempFile, tempFile, path));
+                mBackupManager.addBackupCreator(new StorageFilesBackupCreator(tempFile, tempFile, path));
             }
         }
     }
@@ -109,12 +108,10 @@ public class DriveAppBackup implements Backup {
             }
             pageToken = files.getNextPageToken();
         } while (pageToken != null);
-
-
     }
 
     @Nullable
-    private File getBackupFolder() throws IOException {
+    public File getBackupFolder() throws IOException {
         FileList files = mDriveService.files().list()
                 .setQ("mimeType='application/vnd.google-apps.folder' and name='" + mBackupFolderName + "'")
                 .setSpaces("appDataFolder")
@@ -154,6 +151,7 @@ public class DriveAppBackup implements Backup {
     public void backup() throws BackupException {
         try {
             backupAll();
+
         } catch (BackupInitializationException e) {
             e.printStackTrace();
             throw new BackupException(e);
@@ -164,7 +162,6 @@ public class DriveAppBackup implements Backup {
             if (folder != null)
                 removeBackupFolder(folder.getId());
             folder = createBackupFolder();
-
 
             for (java.io.File tempFile : mPrefsTempFiles)
                 pushFile(folder.getId(), tempFile);
