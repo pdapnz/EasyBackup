@@ -2,19 +2,14 @@ package ru.androidclass.easybackup.utils;
 
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Enumeration;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ZipUtils {
@@ -54,50 +49,38 @@ public class ZipUtils {
     }
 
     public static void unZip(File from, String destPath) throws IOException {
-        InputStream is;
-        ZipInputStream zis;
-        String filename;
-        is = new FileInputStream(from);
-        zis = new ZipInputStream(new BufferedInputStream(is));
-        ZipEntry ze;
-        byte[] buffer = new byte[1024];
-        int count;
+        ZipFile zipFile = new ZipFile(from);
+        Enumeration<?> enu = zipFile.entries();
+        while (enu.hasMoreElements()) {
+            ZipEntry zipEntry = (ZipEntry) enu.nextElement();
 
-        while ((ze = zis.getNextEntry()) != null) {
-            filename = ze.getName();
-            // Need to create directories if not exists, or
-            // it will generate an Exception...
-            if (ze.isDirectory()) {
-                File fmd = new File(destPath + filename);
-                fmd.mkdirs();
+            String name = zipEntry.getName();
+            long size = zipEntry.getSize();
+            long compressedSize = zipEntry.getCompressedSize();
+            System.out.printf("name: %-20s | size: %6d | compressed size: %6d\n", name, size, compressedSize);
+
+            File file = new File(destPath + name);
+            if (name.endsWith("/")) {
+                file.mkdirs();
                 continue;
             }
-            FileOutputStream fout = new FileOutputStream(destPath + filename);
-            while ((count = zis.read(buffer)) != -1) {
-                fout.write(buffer, 0, count);
+
+            File parent = file.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
             }
-            fout.close();
-            zis.closeEntry();
+
+            InputStream is = zipFile.getInputStream(zipEntry);
+            FileOutputStream fos = new FileOutputStream(file);
+            byte[] bytes = new byte[1024];
+            int length;
+            while ((length = is.read(bytes)) >= 0) {
+                fos.write(bytes, 0, length);
+            }
+            is.close();
+            fos.close();
+
         }
-        zis.close();
-    }
-
-    public static String md5(@NonNull String str) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        byte[] bytesOfMessage = str.getBytes("UTF-8");
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        byte[] theMD5digest = md.digest(bytesOfMessage);
-        return bytesToHex(theMD5digest);
-    }
-
-    private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
-
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-        }
-        return new String(hexChars);
+        zipFile.close();
     }
 }
