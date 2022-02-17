@@ -104,7 +104,7 @@ public class DriveAppBackup implements Backup {
         Log.d(TAG, "File created: " + file.getName() + " (" + file.getId() + ")" + " " + file.getCreatedTime());
     }
 
-    private void pullFiles() throws IOException {
+    private void listFiles() throws IOException {
         String pageToken = null;
         do {
             FileList files = mDriveService.files().list()
@@ -171,7 +171,7 @@ public class DriveAppBackup implements Backup {
         return file;
     }
 
-    private void removeBackupFolder(String folderId) throws IOException {
+    public void removeBackupFolder(String folderId) throws IOException {
         mDriveService.files()
                 .delete(folderId)
                 .execute();
@@ -201,7 +201,7 @@ public class DriveAppBackup implements Backup {
             for (java.io.File tempFile : mFilesTempFiles)
                 pushFile(folder.getId(), tempFile);
 
-            pullFiles(); //TODO: remove this (only for debug)
+            //listFiles(); //this is only for debug
         } catch (IOException e) {
             e.printStackTrace();
             throw new BackupException(e);
@@ -211,7 +211,7 @@ public class DriveAppBackup implements Backup {
     @Override
     public void restore() throws RestoreException {
         try {
-            pullFiles(); //TODO: remove this (only for debug)
+            //listFiles(); //this is only for debug
 
             File folder = getBackupFolder();
             if (folder != null) {

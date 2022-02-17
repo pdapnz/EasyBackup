@@ -2,7 +2,9 @@ package ru.androidclass.easybackupsample;
 
 import static ru.androidclass.easybackupsample.db.AppDatabase.DATABASE_NAME;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -54,14 +56,24 @@ public class DriveBackupActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
     private DriveAppBackup mDriveAppBackup;
     private BackupManager mBackupManager;
+    private boolean mEmptyBackup = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_drive_backup);
 
-        findViewById(R.id.backupButton).setOnClickListener(view -> backup());
-        findViewById(R.id.restoreButton).setOnClickListener(view -> restore());
+        findViewById(R.id.backupButton).setOnClickListener(view -> {
+            if (mEmptyBackup) {
+                backup();
+            } else {
+                confirmDialog(getString(R.string.confirm_backup_title), getString(R.string.confirm_backup_notice), (dialogInterface, i) -> backup());
+            }
+        });
+        findViewById(R.id.restoreButton).setOnClickListener(view ->
+                confirmDialog(getString(R.string.confirm_restore_title), getString(R.string.confirm_restore_notice), (dialogInterface, i) -> restore()));
+        findViewById(R.id.removeButton).setOnClickListener(view ->
+                confirmDialog(getString(R.string.confirm_remove_title), getString(R.string.confirm_remove_notice), (dialogInterface, i) -> remove()));
 
         SharedPreferences preferences = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
         preferences.edit().putString("drive_test_key", String.valueOf(Calendar.getInstance().getTime())).apply();
@@ -161,8 +173,8 @@ public class DriveBackupActivity extends AppCompatActivity {
     private final ThreadPoolExecutor mWorkerThreadPool = new ThreadPoolExecutor(0, 4, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
     private void backup() {
+        showLoading(true);
         mWorkerThreadPool.execute(() -> {
-            runOnUiThread(() -> showLoading(true));
             try {
                 if (mBackupManager != null)
                     mBackupManager.backupAll();
@@ -180,7 +192,6 @@ public class DriveBackupActivity extends AppCompatActivity {
     private void restore() {
         showLoading(true);
         mWorkerThreadPool.execute(() -> {
-            runOnUiThread(() -> showLoading(true));
             try {
                 if (mBackupManager != null)
                     mBackupManager.restoreAll();
@@ -189,6 +200,24 @@ public class DriveBackupActivity extends AppCompatActivity {
             } catch (BackupInitializationException | RestoreException e) {
                 e.printStackTrace();
                 toast(e.getMessage());
+            }
+            updateActualBackup();
+        });
+    }
+
+    private void remove() {
+        showLoading(true);
+        mWorkerThreadPool.execute(() -> {
+            if (mDriveAppBackup != null) {
+                try {
+                    final com.google.api.services.drive.model.File file = mDriveAppBackup.getBackupFolder();
+                    if (file != null) {
+                        mDriveAppBackup.removeBackupFolder(file.getId());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    toast(e.getMessage());
+                }
             }
             updateActualBackup();
         });
@@ -204,10 +233,12 @@ public class DriveBackupActivity extends AppCompatActivity {
                     final com.google.api.services.drive.model.File file = mDriveAppBackup.getBackupFolder();
                     runOnUiThread(() -> {
                         if (file != null) {
+                            mEmptyBackup = false;
                             ((TextView) findViewById(R.id.actualBackupName)).setText(format.format(new Date(file.getCreatedTime().getValue())));
                             findViewById(R.id.backupList).setVisibility(View.VISIBLE);
                             findViewById(R.id.emptyBackup).setVisibility(View.GONE);
                         } else {
+                            mEmptyBackup = true;
                             findViewById(R.id.backupList).setVisibility(View.GONE);
                             findViewById(R.id.emptyBackup).setVisibility(View.VISIBLE);
                         }
@@ -227,5 +258,14 @@ public class DriveBackupActivity extends AppCompatActivity {
 
     private void showLoading(boolean isLoading) {
         findViewById(R.id.loading).setVisibility(isLoading ? View.VISIBLE : View.GONE);
+    }
+
+    private void confirmDialog(final String title, final String message, final DialogInterface.OnClickListener listener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(getString(R.string.eb_yes), listener)
+                .setNegativeButton(getString(R.string.eb_no), (dialog, i) -> dialog.dismiss())
+                .show();
     }
 }

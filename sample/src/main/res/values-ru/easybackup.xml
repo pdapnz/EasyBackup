@@ -6,4 +6,13 @@
     <string name="create_backup">Создать резервную копию</string>
     <string name="google_account_used_for_backup">Google-аккаунт для резервного копирования:</string>
     <string name="google_sign_in_notice">Чтобы сделать резервное копирование или восстановить данные приложения через Google Drive, пожалуйста войдите в Google-аккаунт:</string>
+    <string name="eb_yes">Да</string>
+    <string name="eb_no">Нет</string>
+    <string name="confirm_backup_title">Создать резервную копию?</string>
+    <string name="confirm_backup_notice">Внимание! Вновь созданная резервная копия перетрет имеющуюся. Вы действительно хотите создать новую резервную копию данных приложения?</string>
+    <string name="confirm_restore_title">Восстановить данные из резервнной копии?</string>
+    <string name="confirm_restore_notice">Внимание! При восстановлении будут перетерты все текущие данные приложения. Продолжить?</string>
+    <string name="confirm_remove_title">Удалить резервную копию?</string>
+    <string name="confirm_remove_notice">Вы действительно хотите удалить резервную копию данных приложения?</string>
+    <string name="same_account_notice">Обратите внимание! Чтобы восстановить данные приложения с другого телефона, необходимо использовать один и тот же Google-аккаунт на обоих телефонах!</string>
 </resources>

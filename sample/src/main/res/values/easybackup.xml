@@ -6,4 +6,13 @@
     <string name="create_backup">Create backup</string>
     <string name="google_account_used_for_backup">Google account used for backup:</string>
     <string name="google_sign_in_notice">To backup or restore app data using Google Drive Please Sign In at you Google account:</string>
+    <string name="eb_yes">Yes</string>
+    <string name="eb_no">No</string>
+    <string name="confirm_backup_title">Create a backup?</string>
+    <string name="confirm_backup_notice">Attention! The newly created backup will overwrite the existing one. Are you sure you want to create a new app data backup?</string>
+    <string name="confirm_restore_title">Restore data from a backup?</string>
+    <string name="confirm_restore_notice">Attention! When restoring, all current application data will be overwritten. Continue?</string>
+    <string name="confirm_remove_title">Delete backup?</string>
+    <string name="confirm_remove_notice">Are you sure you want to delete app data backup?</string>
+    <string name="same_account_notice">Please note! To restore app data from another smartphone, you need to use the same Google account on both smartphones!</string>
 </resources>
