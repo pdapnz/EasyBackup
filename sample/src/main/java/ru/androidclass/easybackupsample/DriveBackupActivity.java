@@ -30,8 +30,10 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -83,7 +85,6 @@ public class DriveBackupActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
         updateUI();
-
     }
 
     @Override
@@ -100,7 +101,9 @@ public class DriveBackupActivity extends AppCompatActivity {
         try {
             completedTask.getResult(ApiException.class);
         } catch (ApiException e) {
-            Log.w(TAG, "handleSignInResult:error", e);
+            e.printStackTrace();
+            Log.d(TAG, "handleSignInResult:error", e);
+            toast(e.getMessage());
         }
         updateUI();
     }
@@ -138,13 +141,13 @@ public class DriveBackupActivity extends AppCompatActivity {
                         driveService,
                         Collections.singletonList(getPackageName()),
                         Collections.singletonList(DATABASE_NAME),
-                        Collections.singletonList(getFilesDir().getPath())
+                        Collections.singletonList("") //root internal storage directory
                 );
                 backupManager.addBackupCreator(() -> mDriveAppBackup);
                 mBackupManager = backupManager;
             } catch (BackupInitializationException e) {
                 e.printStackTrace();
-                toast("Initialization Failed!");
+                toast(e.getMessage());
             }
             updateActualBackup();
         } else {
@@ -166,12 +169,9 @@ public class DriveBackupActivity extends AppCompatActivity {
                 else
                     toast("Backup Failed!");
 
-            } catch (BackupInitializationException e) {
+            } catch (BackupInitializationException | BackupException e) {
                 e.printStackTrace();
-                toast("Initialization Failed!");
-            } catch (BackupException e) {
-                e.printStackTrace();
-                toast("Backup Failed!");
+                toast(e.getMessage());
             }
             updateActualBackup();
         });
@@ -186,16 +186,15 @@ public class DriveBackupActivity extends AppCompatActivity {
                     mBackupManager.restoreAll();
                 else
                     toast("Restore Failed!");
-            } catch (BackupInitializationException e) {
+            } catch (BackupInitializationException | RestoreException e) {
                 e.printStackTrace();
-                toast("Initialization Failed!");
-            } catch (RestoreException e) {
-                e.printStackTrace();
-                toast("Restore Failed!");
+                toast(e.getMessage());
             }
             updateActualBackup();
         });
     }
+
+    private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public void updateActualBackup() {
         showLoading(true);
@@ -205,7 +204,7 @@ public class DriveBackupActivity extends AppCompatActivity {
                     final com.google.api.services.drive.model.File file = mDriveAppBackup.getBackupFolder();
                     runOnUiThread(() -> {
                         if (file != null) {
-                            ((TextView) findViewById(R.id.actualBackupName)).setText(file.getCreatedTime().toString());
+                            ((TextView) findViewById(R.id.actualBackupName)).setText(format.format(new Date(file.getCreatedTime().getValue())));
                             findViewById(R.id.backupList).setVisibility(View.VISIBLE);
                             findViewById(R.id.emptyBackup).setVisibility(View.GONE);
                         } else {
@@ -217,6 +216,7 @@ public class DriveBackupActivity extends AppCompatActivity {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                toast(e.getMessage());
             }
         });
     }

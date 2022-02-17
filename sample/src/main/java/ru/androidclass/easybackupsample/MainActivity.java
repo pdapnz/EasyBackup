@@ -31,6 +31,7 @@ import ru.androidclass.easybackup.core.exception.BackupInitializationException;
 import ru.androidclass.easybackup.core.exception.RestoreException;
 import ru.androidclass.easybackup.sharedpreferences.SharedPreferencesFileBackupCreator;
 import ru.androidclass.easybackup.sqlite.SqliteFileBackupCreator;
+import ru.androidclass.easybackup.storage.InternalStorageFilesBackupCreator;
 import ru.androidclass.easybackup.storage.StorageFilesBackupCreator;
 import ru.androidclass.easybackupsample.db.DB;
 import ru.androidclass.easybackupsample.db.entity.Lipsum;
@@ -156,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         BackupManager backupManager = new BackupManager();
         backupManager.addBackupCreator(new SharedPreferencesFileBackupCreator(getApplication(), getPackageName(), spBackupFile, spRestoreFile));
         backupManager.addBackupCreator(new SqliteFileBackupCreator(getApplication(), dpBackupFile, dpRestoreFile, DATABASE_NAME));
-        backupManager.addBackupCreator(new StorageFilesBackupCreator(ifBackupFile, ifRestoreFile, getFilesDir().getPath()));
+        backupManager.addBackupCreator(new InternalStorageFilesBackupCreator(getApplication(), ifBackupFile, ifRestoreFile, "./"));
         return backupManager;
     }
 
