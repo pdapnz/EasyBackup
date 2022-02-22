@@ -43,8 +43,10 @@ public class ZipUtils {
     }
 
     private static void addFolderToZip(File rootPath, File srcFolder, ZipOutputStream zip) throws IOException {
-        for (File fileName : srcFolder.listFiles()) {
-            addFileToZip(rootPath, fileName, zip);
+        if (srcFolder != null && srcFolder.listFiles() != null) {
+            for (File fileName : srcFolder.listFiles()) {
+                addFileToZip(rootPath, fileName, zip);
+            }
         }
     }
 
